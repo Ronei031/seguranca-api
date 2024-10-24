@@ -6,13 +6,16 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NHibernate;
 using NHibernate.Dialect;
+using Seguranca.Aplicacao.Usuarios.Profiles;
+using Seguranca.Aplicacao.Usuarios.Servicos;
+using Seguranca.Dominio.Permissoes.Servicos;
+using Seguranca.Infra.Permissoes.Repositorios;
+using Seguranca.Infra.Usuarios.Mapeamentos;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 
 builder.Services.AddControllers().AddJsonOptions(op =>
 {
@@ -20,8 +23,13 @@ builder.Services.AddControllers().AddJsonOptions(op =>
 
     op.JsonSerializerOptions.PropertyNamingPolicy = null;
 
-    //op.JsonSerializerOptions.Converters.Add(new ConverterEnumEmNulo<ConvenioEnum>());
 });
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+    .AddPolicy("Usuario", policy => policy.RequireRole("Usuario"))
+    .AddPolicy("Visitante", policy => policy.RequireRole("Visitante"))
+    .AddPolicy("Desenvolvedor", policy => policy.RequireRole("Desenvolvedor"));
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -42,7 +50,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "JWT Authorization header usando o esquema Bearer."
+        Description = "Digite 'Bearer' [espaço] e o token JWT gerado na aba de login."
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -62,63 +70,63 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
 
-                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                        ValidAudience = builder.Configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey
-                        (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-                    };
-                });
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey
+            (Encoding.UTF8.GetBytes(s: builder.Configuration["Jwt:Key"]))
+        };
+    });
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;
 });
 
-//builder.Services.AddSingleton<ISessionFactory>(factory =>
-//{
-//    string connectionString = builder.Configuration.GetConnectionString("MySql");
-//    return Fluently.Configure()
-//    .Database((MySQLConfiguration.Standard
-//    .Dialect<MySQL5Dialect>()
-//    .ConnectionString(connectionString)
-//    .FormatSql()
-//    .ShowSql()))
-//    .Mappings(x => x.FluentMappings.AddFromAssemblyOf<UsuarioMap>())
-//    .BuildSessionFactory();
-//});
+builder.Services.AddSingleton<ISessionFactory>(factory =>
+{
+    string connectionString = builder.Configuration.GetConnectionString("MySql");
+    return Fluently.Configure()
+    .Database((MySQLConfiguration.Standard
+    .Dialect<MySQL5Dialect>()
+    .ConnectionString(connectionString)
+    .FormatSql()
+    .ShowSql()))
+    .Mappings(x => x.FluentMappings.AddFromAssemblyOf<UsuarioMap>())
+    .BuildSessionFactory();
+});
 
 builder.Services.AddScoped<NHibernate.ISession>(factory => factory.GetService<ISessionFactory>()!.OpenSession());
 builder.Services.AddScoped<ITransaction>(factory => factory.GetService<NHibernate.ISession>()!.BeginTransaction());
 
-//builder.Services.AddAutoMapper(typeof(EspecialidadesProfile));
-//builder.Services.Scan(scan => scan
-//    .FromAssemblyOf<UsuariosAppServico>()
-//        .AddClasses()
-//            .AsImplementedInterfaces()
-//                .WithScopedLifetime());
+builder.Services.AddAutoMapper(typeof(UsuarioProfile));
+builder.Services.Scan(scan => scan
+    .FromAssemblyOf<UsuariosAppServico>()
+        .AddClasses()
+            .AsImplementedInterfaces()
+                .WithScopedLifetime());
 
-//builder.Services.Scan(scan => scan
-//    .FromAssemblyOf<UsuariosServico>()
-//        .AddClasses()
-//            .AsImplementedInterfaces()
-//                .WithScopedLifetime());
+builder.Services.Scan(scan => scan
+    .FromAssemblyOf<PermissoesServico>()
+        .AddClasses()
+            .AsImplementedInterfaces()
+                .WithScopedLifetime());
 
-//builder.Services.Scan(scan => scan
-//    .FromAssemblyOf<UsuariosRepositorio>()
-//        .AddClasses()
-//            .AsImplementedInterfaces()
-//                .WithScopedLifetime());
+builder.Services.Scan(scan => scan
+    .FromAssemblyOf<PermissoesRepositorio>()
+        .AddClasses()
+            .AsImplementedInterfaces()
+                .WithScopedLifetime());
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.UseCors(c =>
 {
@@ -127,9 +135,10 @@ app.UseCors(c =>
     c.AllowAnyOrigin();
 });
 
+app.UseMiddleware<AutorizacaoMiddlewareCustomizada>();
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -137,7 +146,7 @@ if (app.Environment.IsDevelopment())
         c.DisplayRequestDuration();
         c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
-}
+
 
 app.UseHttpsRedirection();
 
