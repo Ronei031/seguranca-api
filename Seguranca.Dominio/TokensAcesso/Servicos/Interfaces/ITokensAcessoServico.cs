@@ -4,6 +4,6 @@ namespace Seguranca.Dominio.TokensAcesso.Servicos.Interfaces
 {
     public interface ITokensAcessoServico
     {
-        Task<string> GerarTokenAsync(Usuario usuario, CancellationToken cancellationToken = default);
+        Task<string> GerarTokenAsync(Usuario usuario, byte[] key, CancellationToken cancellationToken = default);
     }
 }

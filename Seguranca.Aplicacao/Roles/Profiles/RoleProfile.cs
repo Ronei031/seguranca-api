@@ -9,8 +9,7 @@ namespace Seguranca.Aplicacao.Roles.Profiles
     {
         public RoleProfile()
         {
-            CreateMap<Role, RoleResponse>()
-                .ForMember(dest => dest.Nome, opt => opt.MapFrom(src => src.Nome.GetValue()));
+            CreateMap<Role, RoleResponse>();
         }
     }
 }

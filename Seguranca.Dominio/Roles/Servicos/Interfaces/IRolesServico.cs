@@ -5,6 +5,6 @@ namespace Seguranca.Dominio.Roles.Servicos.Interfaces
 {
     public interface IRolesServico
     {
-        Role RecuperarPorNome(RoleEnum nomeRole);
+        Role RecuperarPorNome(string nomeRole);
     }
 }

@@ -16,13 +16,13 @@ namespace Seguranca.Dominio.Roles.Servicos
             this.rolesRepositorio = rolesRepositorio;
         }
 
-        public Role RecuperarPorNome(RoleEnum nomeRole)
+        public Role RecuperarPorNome(string nomeRole)
         {
             IQueryable<Role> query = rolesRepositorio.Query();
 
-            Role role = query.FirstOrDefault(u => u.Nome == nomeRole);
+            Role role = query.FirstOrDefault(u => u.Descricao == nomeRole);
 
-            return role ?? throw new RegraDeNegocioExcecao($"'{nomeRole.GetDescription()}' não encontrado.");
+            return role ?? throw new RegraDeNegocioExcecao($"'{nomeRole}' não encontrado.");
         }
     }
 }

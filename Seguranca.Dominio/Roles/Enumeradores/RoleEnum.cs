@@ -4,13 +4,17 @@ namespace Seguranca.Dominio.Roles.Enumeradores
 {
     public enum RoleEnum
     {
-        [Description("Usuário")]
-        Usuario = 1,
-        [Description("Administrador")]
-        Administrador = 2,
-        [Description("Visitante")]
-        Visitante = 3,
-        [Description("Desenvolvedor")]
-        Desenvolvedor = 4
+        [Description("SuperAdmin")]
+        SuperAdmin = 1,
+        [Description("MasterTi")]
+        MasterTi = 2,
+        [Description("AdminEmpresa")]
+        AdminEmpresa = 3,
+        [Description("Gerente")]
+        Gerente = 4,
+        [Description("Usuario")]
+        Usuario = 5,
+        [Description("Convidado")]
+        Convidado = 6,
     }
 }

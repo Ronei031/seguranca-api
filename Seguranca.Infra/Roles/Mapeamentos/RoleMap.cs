@@ -12,7 +12,7 @@ namespace Seguranca.Infra.Roles.Mapeamentos
             Table("role");
 
             Id(x => x.Id);
-            Map(x => x.Nome).Not.Nullable().CustomType<EnumType<RoleEnum>>();
+            Map(x => x.Nome).Not.Nullable();
             Map(x => x.Descricao).Length(250);
 
             HasMany(x => x.UsuarioRoles)

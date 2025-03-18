@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
-using NHibernate.Engine.Query;
+using Microsoft.Extensions.Configuration;
 using Seguranca.Aplicacao.Usuarios.Servicos.Interfaces;
 using Seguranca.Aplicacao.Utils.Transacoes.Interface;
 using Seguranca.DataTransfer.Usuarios.Requests;
 using Seguranca.DataTransfer.Usuarios.Responses;
+using Seguranca.Dominio.RabbitMq.Repositorios;
 using Seguranca.Dominio.Roles.Entidades;
 using Seguranca.Dominio.Roles.Enumeradores;
 using Seguranca.Dominio.Roles.Servicos.Interfaces;
@@ -13,6 +14,8 @@ using Seguranca.Dominio.Usuarios.Repositorios;
 using Seguranca.Dominio.Usuarios.Servicos.Interfaces;
 using Seguranca.Dominio.UsuariosRoles.Entidades;
 using Seguranca.Dominio.UsuariosRoles.Servicos.Interfaces;
+using Seguranca.Dominio.Utils.Enumeradores;
+using System.Text;
 
 namespace Seguranca.Aplicacao.Usuarios.Servicos
 {
@@ -25,8 +28,10 @@ namespace Seguranca.Aplicacao.Usuarios.Servicos
         private readonly IUsuariosServico usuariosServico;
         private readonly ITokensAcessoServico tokensAcessoServico;
         private readonly IRolesServico rolesServico;
+        private readonly IConfiguration configuration;
+        private readonly IRabbitMqRepositorio rabbitMqRepositorio;
 
-        public UsuariosAppServico(IMapper mapper, IUnitOfWork unitOfWork, IUsuariosRepositorio usuariosRepositorio, IUsuariosServico usuariosServico, ITokensAcessoServico tokensAcessoServico, IRolesServico rolesServico, IUsuarioRolesServico usuarioRolesServico)
+        public UsuariosAppServico(IMapper mapper, IUnitOfWork unitOfWork, IUsuariosRepositorio usuariosRepositorio, IUsuariosServico usuariosServico, ITokensAcessoServico tokensAcessoServico, IRolesServico rolesServico, IUsuarioRolesServico usuarioRolesServico, IConfiguration configuration, IRabbitMqRepositorio rabbitMqRepositorio)
         {
             this.mapper = mapper;
             this.unitOfWork = unitOfWork;
@@ -35,6 +40,8 @@ namespace Seguranca.Aplicacao.Usuarios.Servicos
             this.tokensAcessoServico = tokensAcessoServico;
             this.rolesServico = rolesServico;
             this.usuarioRolesServico = usuarioRolesServico;
+            this.configuration = configuration;
+            this.rabbitMqRepositorio = rabbitMqRepositorio;
         }
 
         public async Task<UsuarioResponse> CriarUsuarioAsync(UsuarioRequest usuarioRequest, CancellationToken cancellationToken = default)
@@ -49,13 +56,27 @@ namespace Seguranca.Aplicacao.Usuarios.Servicos
 
                 Usuario usuario = new(usuarioRequest.NomeCompleto, usuarioRequest.NomeUsuario, usuarioRequest.Email, senhaHashCriptografado);
 
-                Role role = rolesServico.RecuperarPorNome(RoleEnum.Usuario);
+                Role role = rolesServico.RecuperarPorNome(RoleEnum.Usuario.GetDescription());
 
                 Usuario usuarioResponse = await usuariosRepositorio.InserirAsync(usuario, cancellationToken);
 
                 UsuarioRole usuarioRole = await usuarioRolesServico.InserirAsync(usuarioResponse.Id, usuarioResponse, role.Id, role, cancellationToken);
 
                 usuario.UsuarioRoles.Add(usuarioRole);
+
+                //JsonSerializerOptions jsonSerializerOptions = new()
+                //{
+                //    ReferenceHandler = ReferenceHandler.Preserve
+                //};
+
+                //JsonSerializerOptions options = jsonSerializerOptions;
+
+                //// Serializar o objeto com o novo comportamento
+                //string usuarioSerealizado = JsonSerializer.Serialize(usuarioResponse, options);
+
+                //string mensagem = $"Usuário Cadastrado {usuarioResponse}";
+
+                //await rabbitMqRepositorio.EnviarMensagemAsync(mensagem, "UsuarioCadastro", cancellationToken);
 
                 unitOfWork.Commit();
 
@@ -75,13 +96,28 @@ namespace Seguranca.Aplicacao.Usuarios.Servicos
 
                 Usuario usuario = usuariosServico.RecuperarPorNomeUsuario(request.NomeUsuario);
 
-                usuariosServico.VerificarStatusUsuario(usuario.Status);
-
                 bool loginValido = usuariosServico.VerificarSenha(request.Senha, usuario.SenhaHash);
+
+                usuariosServico.VerificarStatusUsuario(usuario.Status);
 
                 await AtualizarDataUltimoLogin(usuario, loginValido, cancellationToken);
 
-                string token = await tokensAcessoServico.GerarTokenAsync(usuario, cancellationToken);
+                string chave = configuration["Jwt:Key"] ?? "";
+
+                byte[] key = Encoding.ASCII.GetBytes(chave);
+
+                string token = await tokensAcessoServico.GerarTokenAsync(usuario, key, cancellationToken);
+
+                //JsonSerializerOptions jsonSerializerOptions = new()
+                //{
+                //    ReferenceHandler = ReferenceHandler.Preserve
+                //};
+
+                //string usuarioSerealizado = JsonSerializer.Serialize(usuario, jsonSerializerOptions);
+
+                //string mensagem = $"Usuário logado: {usuarioSerealizado}";
+
+                //await rabbitMqRepositorio.EnviarMensagemAsync(mensagem, "UsuarioLogin", cancellationToken);
 
                 unitOfWork.Commit();
 
@@ -97,6 +133,7 @@ namespace Seguranca.Aplicacao.Usuarios.Servicos
                 throw new ArgumentException(ex.Message);
             }
         }
+
 
         #region Métodos Privados
         private async Task AtualizarDataUltimoLogin(Usuario usuario, bool loginValido, CancellationToken cancellationToken)

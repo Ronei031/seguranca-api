@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Seguranca.Aplicacao.Usuarios.Servicos.Interfaces;
 using Seguranca.DataTransfer.Usuarios.Requests;
 using Seguranca.DataTransfer.Usuarios.Responses;
 
-namespace Seguranca.API.Controllers
+namespace Seguranca.API.Controllers.Usuarios
 {
     [Route("api/usuarios")]
     [ApiController]
@@ -23,7 +22,6 @@ namespace Seguranca.API.Controllers
         /// <param name="request"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        [Authorize(Policy = "Admin")]
         [HttpPost("cadastrar")]
         public async Task<ActionResult<UsuarioResponse>> Inserir([FromBody] UsuarioRequest request, CancellationToken cancellationToken)
         {
@@ -46,25 +44,29 @@ namespace Seguranca.API.Controllers
                 // Tenta efetuar o login
                 UsuarioLoginResponse response = await usuariosAppServico.EfetuarLoginAsync(request, cancellationToken);
 
-                // Retorna um OK com o token gerado
+                // Adiciona o token no cabeçalho da resposta
+                if (!string.IsNullOrEmpty(response.Token))
+                {
+                    Response.Headers.Append("Authorization", $"Bearer {response.Token}");
+                }
+
+                // Retorna um OK sem incluir o token no body, se preferir manter apenas no header
                 return Ok(response);
             }
             catch (ArgumentException ex)
             {
-                // Retorna um BadRequest (400) se houver uma ArgumentException
                 return BadRequest(new { Error = ex.Message });
             }
             catch (UnauthorizedAccessException ex)
             {
-                // Retorna um Unauthorized (401) se houver falha de autenticação
                 return Unauthorized(new { Error = ex.Message });
             }
             catch (Exception ex)
             {
-                // Retorna um InternalServerError (500) para qualquer outro erro não tratado
                 return StatusCode(StatusCodes.Status500InternalServerError, new { Error = "Ocorreu um erro inesperado." });
             }
         }
+
 
     }
 }
