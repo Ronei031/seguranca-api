@@ -4,7 +4,7 @@ using Seguranca.Aplicacao.Roles.Servicos.Interfaces;
 using Seguranca.DataTransfer.Roles.Requests;
 using Seguranca.DataTransfer.Roles.Responses;
 
-namespace Seguranca.API.Controllers
+namespace Seguranca.API.Controllers.Roles
 {
     public class RolesController : Controller
     {
@@ -21,7 +21,7 @@ namespace Seguranca.API.Controllers
         /// <param name="request"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        //[Authorize]
+        [Authorize]
         [HttpPost("cadastrar")]
         public async Task<ActionResult<RoleResponse>> Inserir([FromBody] RoleRequest request, CancellationToken cancellationToken)
         {

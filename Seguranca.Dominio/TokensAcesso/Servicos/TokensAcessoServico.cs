@@ -6,7 +6,6 @@ using Seguranca.Dominio.Usuarios.Entidades;
 using Seguranca.Dominio.Utils.Enumeradores;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace Seguranca.Dominio.TokensAcesso.Servicos
 {
@@ -19,21 +18,25 @@ namespace Seguranca.Dominio.TokensAcesso.Servicos
             this.tokenAcessoRepositorio = tokenAcessoRepositorio;
         }
 
-        public async Task<string> GerarTokenAsync(Usuario usuario, CancellationToken cancellationToken = default)
+        public async Task<string> GerarTokenAsync(Usuario usuario, byte[] key, CancellationToken cancellationToken = default)
         {
             JwtSecurityTokenHandler manipuladorDeToken = new();
 
-            byte[] key = Encoding.ASCII.GetBytes("5jXNOmtDSks9zY0qQeMffTccqx8L3VXDL1E6qJK4q0c=");
+            // Ajuste para o fuso horário desejado (exemplo: Horário de Brasília)
+            TimeZoneInfo fusoHorario = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+
+            DateTime dataAtual = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, fusoHorario);
 
             SecurityTokenDescriptor descritorToken = new()
             {
-                Subject = new ClaimsIdentity(
-                [
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                 new Claim(ClaimTypes.Role, string.Join(",", usuario.UsuarioRoles.Select(ur => ur.Role.Nome))),
-                new Claim(ClaimTypes.Email, usuario.Email)
-                ]),
-                Expires = DateTime.UtcNow.AddHours(2),
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                    new Claim(ClaimTypes.Role, string.Join(",", usuario.UsuarioRoles.Select(ur => ur.Role.Nome))),
+                    new Claim(ClaimTypes.Email, usuario.Email)
+                }),
+                NotBefore = dataAtual,
+                Expires = dataAtual.AddHours(2),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = "admin",
                 Audience = "seguranca"
@@ -48,7 +51,7 @@ namespace Seguranca.Dominio.TokensAcesso.Servicos
                 usuario.Id,
                 usuario,
                 SimNaoEnum.Nao,
-                DateTime.UtcNow.AddHours(2)
+                token.ValidFrom
             );
 
             await tokenAcessoRepositorio.InserirAsync(tokenAcesso, cancellationToken);

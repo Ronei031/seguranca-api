@@ -87,12 +87,6 @@ namespace Seguranca.Dominio.Usuarios.Entidades
                 throw new AtributoObrigatorioExcecao("Senha Hash");
             }
 
-            // Validação de senha
-            if (!ValidarSenha(senhaHash))
-            {
-                throw new RegraDeNegocioExcecao("A senha deve ter mais de 8 caracteres e conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.");
-            }
-
             SenhaHash = senhaHash;
         }
 
