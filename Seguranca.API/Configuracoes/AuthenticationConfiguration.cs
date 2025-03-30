@@ -19,7 +19,7 @@ namespace Seguranca.API.Configuracoes
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = configuration["Jwt:Issuer"],
                         ValidAudience = configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? "5jXNOmtDSks9zY0qQeMffTccqx8L3VXDL1E6qJK4q0c="))
                     };
                 });
         }

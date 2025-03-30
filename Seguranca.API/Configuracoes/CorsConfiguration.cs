@@ -1,4 +1,5 @@
-﻿namespace Seguranca.API.Configuracoes
+﻿
+namespace Seguranca.API.Configuracoes
 {
     public static class CorsConfiguration
     {
@@ -8,7 +9,7 @@
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.AllowAnyOrigin()
+                    builder.WithOrigins(["http://localhost:8080", "http://seguranca-front:8080"])
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .WithExposedHeaders("Authorization");

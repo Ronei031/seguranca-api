@@ -32,8 +32,10 @@ namespace Seguranca.Dominio.TokensAcesso.Servicos
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                    new Claim(ClaimTypes.Name, usuario.NomeCompleto.ToString()),
                     new Claim(ClaimTypes.Role, string.Join(",", usuario.UsuarioRoles.Select(ur => ur.Role.Nome))),
-                    new Claim(ClaimTypes.Email, usuario.Email)
+                    new Claim(ClaimTypes.Email, usuario.Email),
+                    new Claim(ClaimTypes.Uri, usuario.UrlImagemPerfil ?? "")
                 }),
                 NotBefore = dataAtual,
                 Expires = dataAtual.AddHours(2),

@@ -19,6 +19,7 @@ namespace Seguranca.Infra.Usuarios.Mapeamentos
             Map(x => x.Status).Not.Nullable().CustomType<EnumType<AtivoInativoEnum>>();
             Map(x => x.DataCriacao).Not.Nullable();
             Map(x => x.UltimoLogin).Nullable();
+            Map(x => x.UrlImagemPerfil).Not.Nullable();
 
             HasMany(x => x.UsuarioRoles)
                 .Cascade.All()

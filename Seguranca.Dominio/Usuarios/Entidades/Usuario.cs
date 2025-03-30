@@ -18,12 +18,13 @@ namespace Seguranca.Dominio.Usuarios.Entidades
         public virtual DateTime? UltimoLogin { get; protected set; }
         public virtual IList<UsuarioRole> UsuarioRoles { get; protected set; } = [];
         public virtual IList<TokenAcesso> TokensAcesso { get; protected set; } = [];
+        public virtual string UrlImagemPerfil { get; protected set; }
 
         protected Usuario()
         {
         }
 
-        public Usuario(string nomeCompleto, string nomeUsuario, string email, string senhaHash)
+        public Usuario(string nomeCompleto, string nomeUsuario, string email, string senhaHash, string urlImagemPerfil)
         {
             SetNomeCompleto(nomeCompleto);
             SetNomeUsuario(nomeUsuario);
@@ -31,6 +32,7 @@ namespace Seguranca.Dominio.Usuarios.Entidades
             SetSenhaHash(senhaHash);
             Status = AtivoInativoEnum.Ativo;
             DataCriacao = DateTime.Now;
+            SetUrlImagemPerfil(urlImagemPerfil);
         }
 
         public virtual void SetNomeCompleto(string nomeCompleto)
@@ -98,6 +100,16 @@ namespace Seguranca.Dominio.Usuarios.Entidades
         public virtual void SetUltimoLogin(DateTime? ultimoLogin)
         {
             UltimoLogin = ultimoLogin;
+        }
+
+        public virtual void SetUrlImagemPerfil(string urlImagemPerfil)
+        {
+            if (string.IsNullOrWhiteSpace(urlImagemPerfil))
+            {
+                throw new AtributoObrigatorioExcecao("urlImagemPerfil");
+            }
+
+            UrlImagemPerfil = urlImagemPerfil;
         }
 
         #region Métodos privados

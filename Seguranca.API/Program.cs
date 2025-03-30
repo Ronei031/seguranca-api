@@ -13,11 +13,11 @@ builder.Services.AddCorsConfiguration();
 var app = builder.Build();
 
 app.UseCors();
-app.UseApplicationMiddleware();
-app.UseSwaggerConfiguration();
-app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseApplicationMiddleware();
+app.UseSwaggerConfiguration();
+//app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();

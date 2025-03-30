@@ -1,3 +1,4 @@
+# Ignorar arquivos e diretórios desnecessários
 **/.classpath
 **/.dockerignore
 **/.env
@@ -12,19 +13,26 @@
 **/*.dbmdl
 **/*.jfm
 **/azds.yaml
-**/bin
-**/charts
-**/docker-compose*
-**/Dockerfile*
 **/node_modules
 **/npm-debug.log
-**/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+
+# Ignorar diretórios de build temporários (gerados durante a compilação)
+**/bin
+**/obj
+
+# Ignorar arquivos relacionados ao Docker Compose e Dockerfile extras
+**/charts
+**/docker-compose*
 LICENSE
-README.md
-!**/.gitignore
-!.git/HEAD
-!.git/config
-!.git/packed-refs
-!.git/refs/heads/**
+
+# Incluir explicitamente os arquivos necessários para o build do Docker
+!Seguranca.API/Seguranca.API.csproj
+!Seguranca.Aplicacao/Seguranca.Aplicacao.csproj
+!Seguranca.DataTransfer/Seguranca.DataTransfer.csproj
+!Seguranca.Dominio/Seguranca.Dominio.csproj
+!Seguranca.Infra/Seguranca.Infra.csproj
+
+# Incluir README.md explicitamente (se necessário)
+!README.md

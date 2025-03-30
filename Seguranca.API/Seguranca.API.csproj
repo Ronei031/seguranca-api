@@ -8,6 +8,8 @@
     <NoWarn>1701;1702;1591</NoWarn> 
     <UserSecretsId>158fbcf2-d89d-4631-9507-b6bbd7bbe328</UserSecretsId> 
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS> 
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers> 
+    <EnableSdkContainerDebugging>True</EnableSdkContainerDebugging> 
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +28,12 @@
     <ProjectReference Include="..\Seguranca.Infra\Seguranca.Infra.csproj" />
     <ProjectReference Include="..\Seguranca.Aplicacao\Seguranca.Aplicacao.csproj" />
     <ProjectReference Include="..\Seguranca.DataTransfer\Seguranca.DataTransfer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContainerEnvironmentVariable Include="ASPNETCORE_HTTPS_PORTS">
+      <Value>8081</Value>
+    </ContainerEnvironmentVariable>
   </ItemGroup>
 
 </Project>

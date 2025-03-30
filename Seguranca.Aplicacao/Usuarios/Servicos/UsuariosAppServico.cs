@@ -54,7 +54,7 @@ namespace Seguranca.Aplicacao.Usuarios.Servicos
 
                 string senhaHashCriptografado = usuariosServico.CriptografarSenha(usuarioRequest.Senha);
 
-                Usuario usuario = new(usuarioRequest.NomeCompleto, usuarioRequest.NomeUsuario, usuarioRequest.Email, senhaHashCriptografado);
+                Usuario usuario = new(usuarioRequest.NomeCompleto, usuarioRequest.NomeUsuario, usuarioRequest.Email, senhaHashCriptografado, usuarioRequest.UrlImagemPerfil);
 
                 Role role = rolesServico.RecuperarPorNome(RoleEnum.Usuario.GetDescription());
 

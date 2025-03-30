@@ -1,0 +1,106 @@
+services:
+  mysql:
+    image: 'mysql:8.0'
+    container_name: mysql
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: seguranca
+    command: >-
+      --lower_case_table_names=1
+      --default-authentication-plugin=mysql_native_password
+    volumes:
+      - './mysql-data:/var/lib/mysql'
+    networks:
+      - seguranca
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - '-h'
+        - localhost
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+  rabbitmq:
+    image: 'rabbitmq'
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - seguranca
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmqctl
+        - status
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+  seguranca-api:
+    build:
+      context: .
+      dockerfile: Seguranca.API/Dockerfile
+    container_name: seguranca-api
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - '7271:7271'
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: 'http://+:7271'
+      ConnectionStrings__MySql: Server=mysql;Port=3306;Database=seguranca;Uid=root;Pwd=root
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+    networks:
+      - seguranca
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '-s'
+        - '-f'
+        - 'http://127.0.0.1:7271/api/v1/healthcheck'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  seguranca-front:
+    build:
+      context: ../Angular/formulario
+      dockerfile: Dockerfile
+    container_name: seguranca-front
+    restart: always
+    ports:
+      - '8080:80'
+    networks:
+      - seguranca
+    depends_on:
+      - seguranca-api
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - '--spider'
+        - 'http://localhost'
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+networks:
+  seguranca:
+    driver: bridge
